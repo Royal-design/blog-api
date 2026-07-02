@@ -7,3 +7,7 @@ class UserRole(str, enum.Enum):
 class PostStatus(str, enum.Enum):
     DRAFT = "draft"
     PUBLISHED = "published"
+    
+class AuthProvider(str, enum.Enum):
+    CREDENTIALS = "credentials"
+    GOOGLE = "google"

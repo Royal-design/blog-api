@@ -4,7 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.core.database import Base
-from app.models.enums import UserRole
+from app.models.enums import AuthProvider, UserRole
 
 from typing import TYPE_CHECKING
 
@@ -30,7 +30,7 @@ class User(Base):
 
     role: Mapped[UserRole] = mapped_column(SAEnum(UserRole), nullable=False, default=UserRole.USER)
 
-    provider: Mapped[str] = mapped_column(String, nullable=False)
+    provider: Mapped[AuthProvider] = mapped_column(SAEnum(AuthProvider), nullable=False, default=AuthProvider.CREDENTIALS)
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
