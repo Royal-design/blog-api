@@ -1,19 +1,26 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Body, Depends, BackgroundTasks, status
 
 from app.api.dependencies.services import get_auth_service
 from app.api.dependencies.auth import get_current_user, get_bearer_token
+
 from app.schemas.auth import (
+    AuthResponse,
     ForgotPasswordRequest,
+    LogoutRequest,
     ResetPasswordRequest,
     ChangePasswordRequest,
 )
+
 from app.schemas.user import (
     RegisterRequest,
     LoginRequest,
     RefreshTokenRequest,
+    UserResponse,
 )
+
 from app.models.user import User
 from app.services.auth_service import AuthService
+
 from app.schemas.response import MessageResponse, SuccessResponse
 
 router = APIRouter()
@@ -22,22 +29,28 @@ router = APIRouter()
 # -------------------------
 # REGISTER
 # -------------------------
-@router.post("/register")
+@router.post(
+    "/register",
+    response_model=SuccessResponse[AuthResponse],
+    status_code=status.HTTP_201_CREATED,
+)
 def register(
     user: RegisterRequest,
     background_tasks: BackgroundTasks,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    result =  auth_service.register(user, background_tasks)
+    auth_data = auth_service.register(user, background_tasks)
+
     return SuccessResponse(
-        data=result,
         message="User registered successfully",
+        data=AuthResponse.model_validate(auth_data)
     )
+
 
 # -------------------------
 # LOGIN
 # -------------------------
-@router.post("/login")
+@router.post("/login", response_model=AuthResponse)
 def login(
     data: LoginRequest,
     auth_service: AuthService = Depends(get_auth_service),
@@ -48,7 +61,7 @@ def login(
 # -------------------------
 # REFRESH TOKEN
 # -------------------------
-@router.post("/refresh")
+@router.post("/refresh", response_model=AuthResponse)
 def refresh(
     data: RefreshTokenRequest,
     auth_service: AuthService = Depends(get_auth_service),
@@ -59,22 +72,25 @@ def refresh(
 # -------------------------
 # LOGOUT
 # -------------------------
-@router.post("/logout")
+@router.post("/logout", response_model=MessageResponse)
 def logout(
-    refresh_data: RefreshTokenRequest,
+    logout_data: LogoutRequest | None = Body(default=None),
     token: str = Depends(get_bearer_token),
     auth_service: AuthService = Depends(get_auth_service),
 ):
     return auth_service.logout(
         access_token=token,
-        refresh_token=refresh_data.refresh_token,
+        refresh_token=logout_data.refresh_token if logout_data else None,
     )
 
 
 # -------------------------
 # FORGOT PASSWORD
 # -------------------------
-@router.post("/forgot-password", response_model=MessageResponse)
+@router.post(
+    "/forgot-password",
+    response_model=MessageResponse
+)
 def forgot_password(
     data: ForgotPasswordRequest,
     background_tasks: BackgroundTasks,
@@ -86,7 +102,10 @@ def forgot_password(
 # -------------------------
 # RESET PASSWORD
 # -------------------------
-@router.post("/reset-password", response_model=MessageResponse)
+@router.post(
+    "/reset-password",
+    response_model=MessageResponse
+)
 def reset_password(
     data: ResetPasswordRequest,
     auth_service: AuthService = Depends(get_auth_service),
@@ -95,9 +114,12 @@ def reset_password(
 
 
 # -------------------------
-# CHANGE PASSWORD (protected)
+# CHANGE PASSWORD
 # -------------------------
-@router.post("/change-password", response_model=MessageResponse)
+@router.post(
+    "/change-password",
+    response_model=MessageResponse
+)
 def change_password(
     data: ChangePasswordRequest,
     current_user: User = Depends(get_current_user),
@@ -110,10 +132,13 @@ def change_password(
 
 
 # -------------------------
-# GET CURRENT USER (optional helper route)
+# GET CURRENT USER
 # -------------------------
-@router.get("/me")
+@router.get(
+    "/me",
+    response_model=UserResponse
+)
 def me(
     current_user: User = Depends(get_current_user),
 ):
-    return current_user
+    return UserResponse.model_validate(current_user)

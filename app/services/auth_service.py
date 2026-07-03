@@ -1,4 +1,5 @@
 from fastapi import BackgroundTasks
+from uuid import UUID
 
 from app.core.config import settings
 from app.core.exceptions import AppException
@@ -107,7 +108,7 @@ class AuthService:
         )
 
         try:
-            user_id = int(payload["sub"])
+            user_id = UUID(payload["sub"])
         except (KeyError, TypeError, ValueError):
             raise AppException(
                 message="Invalid token subject",
@@ -194,7 +195,7 @@ class AuthService:
         )
 
         try:
-            user_id = int(payload["sub"])
+            user_id = UUID(payload["sub"])
         except (KeyError, TypeError, ValueError):
             raise AppException(
                 message="Invalid reset token",
@@ -221,7 +222,7 @@ class AuthService:
     # -------------------------
     def change_password(
         self,
-        user_id: int,
+        user_id: UUID,
         request: ChangePasswordRequest,
     ):
         user = self.user_service.get_user_by_id(user_id)

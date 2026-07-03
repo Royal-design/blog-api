@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import Depends, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -26,8 +28,8 @@ def get_current_user(
 
     # 1. validate subject
     try:
-        user_id = int(payload.get("sub"))
-    except (TypeError, ValueError):
+        user_id = UUID(payload.get("sub"))
+    except (AttributeError, TypeError, ValueError):
         raise AppException(
             message="Invalid token subject",
             status_code=401,

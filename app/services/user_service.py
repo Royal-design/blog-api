@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from app.core.exceptions import AppException
 from app.core.security import hash_password
 from app.models.user import User
@@ -18,7 +20,7 @@ class UserService:
     # -------------------------
     # GET USER BY ID
     # -------------------------
-    def get_user_by_id(self, user_id: int) -> User:
+    def get_user_by_id(self, user_id: UUID) -> User:
         user = self.repository.get_user_by_id(user_id)
 
         if not user:
@@ -79,7 +81,7 @@ class UserService:
     # -------------------------
     def update_user(
         self,
-        user_id: int,
+        user_id: UUID,
         user: UserUpdateRequest,
     ) -> User:
 
@@ -117,7 +119,7 @@ class UserService:
     # -------------------------
     # DELETE USER
     # -------------------------
-    def delete_user(self, user_id: int) -> User:
+    def delete_user(self, user_id: UUID) -> User:
 
         user = self.get_user_by_id(user_id)
 
