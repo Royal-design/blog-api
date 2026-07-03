@@ -1,10 +1,7 @@
 from fastapi import BackgroundTasks
 
 from app.core.config import settings
-from app.core.exceptions import (
-    InvalidCredentialsError,
-    InvalidTokenException,
-)
+from app.core.exceptions import AppException
 from app.core.security import (
     create_access_token,
     create_password_reset_token,
@@ -23,8 +20,8 @@ from app.schemas.auth import (
 from app.schemas.response import MessageResponse
 from app.schemas.user import (
     RefreshTokenRequest,
-    UserCreate,
-    UserInLogin,
+    RegisterRequest,
+    LoginRequest,
 )
 from app.services.email_service import EmailService
 from app.services.user_service import UserService
@@ -44,7 +41,7 @@ class AuthService:
     # -------------------------
     def register(
         self,
-        user: UserCreate,
+        user: RegisterRequest,
         background_tasks: BackgroundTasks,
     ):
         hashed_password = hash_password(user.password)
@@ -54,7 +51,6 @@ class AuthService:
             hashed_password,
         )
 
-        # send welcome email (non-blocking)
         background_tasks.add_task(
             self.email_service.send_welcome_email,
             db_user.email,
@@ -72,19 +68,27 @@ class AuthService:
     # -------------------------
     # LOGIN
     # -------------------------
-    def login(self, login_data: UserInLogin):
+    def login(self, login_data: LoginRequest):
         user = self.user_service.get_user_by_email(
             login_data.email
         )
 
         if not user:
-            raise InvalidCredentialsError()
+            raise AppException(
+                message="Invalid credentials",
+                status_code=401,
+                error_code="INVALID_CREDENTIALS",
+            )
 
         if not verify_password(
             login_data.password,
             user.password,
         ):
-            raise InvalidCredentialsError()
+            raise AppException(
+                message="Invalid credentials",
+                status_code=401,
+                error_code="INVALID_CREDENTIALS",
+            )
 
         tokens = self._create_auth_tokens(user)
 
@@ -105,7 +109,11 @@ class AuthService:
         try:
             user_id = int(payload["sub"])
         except (KeyError, TypeError, ValueError):
-            raise InvalidTokenException("Invalid token subject")
+            raise AppException(
+                message="Invalid token subject",
+                status_code=401,
+                error_code="INVALID_TOKEN",
+            )
 
         user = self.user_service.get_user_by_id(user_id)
 
@@ -148,7 +156,6 @@ class AuthService:
             request.email
         )
 
-        # always return same response (security best practice)
         response = MessageResponse(
             message=(
                 "If an account exists with this email, "
@@ -164,8 +171,7 @@ class AuthService:
         )
 
         reset_link = (
-            f"{settings.frontend_url}"
-            f"/reset-password?token={reset_token}"
+            f"{settings.frontend_url}/reset-password?token={reset_token}"
         )
 
         background_tasks.add_task(
@@ -190,7 +196,11 @@ class AuthService:
         try:
             user_id = int(payload["sub"])
         except (KeyError, TypeError, ValueError):
-            raise InvalidTokenException("Invalid reset token")
+            raise AppException(
+                message="Invalid reset token",
+                status_code=401,
+                error_code="INVALID_RESET_TOKEN",
+            )
 
         user = self.user_service.get_user_by_id(user_id)
 
@@ -220,8 +230,10 @@ class AuthService:
             request.current_password,
             user.password,
         ):
-            raise InvalidCredentialsError(
-                "Current password is incorrect"
+            raise AppException(
+                message="Current password is incorrect",
+                status_code=401,
+                error_code="INVALID_PASSWORD",
             )
 
         user.password = hash_password(

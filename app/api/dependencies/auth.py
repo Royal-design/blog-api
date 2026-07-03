@@ -2,7 +2,7 @@ from fastapi import Depends, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.api.dependencies.services import get_user_service
-from app.core.exceptions import InvalidTokenException
+from app.core.exceptions import AppException
 from app.core.security import decode_access_token
 from app.services.user_service import UserService
 from app.models.user import User
@@ -28,12 +28,20 @@ def get_current_user(
     try:
         user_id = int(payload.get("sub"))
     except (TypeError, ValueError):
-        raise InvalidTokenException("Invalid token subject")
+        raise AppException(
+            message="Invalid token subject",
+            status_code=401,
+            error_code="INVALID_TOKEN",
+        )
 
     # 2. fetch user
     user = user_service.get_user_by_id(user_id)
 
     if not user:
-        raise InvalidTokenException("User not found")
+        raise AppException(
+            message="User not found",
+            status_code=404,
+            error_code="USER_NOT_FOUND",
+        )
 
     return user

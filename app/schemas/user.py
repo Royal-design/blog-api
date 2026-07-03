@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models.enums import AuthProvider, UserRole
 
@@ -14,14 +14,14 @@ class UserBase(BaseModel):
     bio: str | None = None
     avatar: str | None = None
     
-class UserCreate(UserBase):
+class RegisterRequest(UserBase):
     password: str
     
-class UserLogin(BaseModel):
+class LoginRequest(BaseModel):
     email: EmailStr
     password: str
     
-class UserUpdate(BaseModel):
+class UserUpdateRequest(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     username: str | None = None
@@ -38,3 +38,9 @@ class UserResponse(UserBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str = Field(
+        min_length=10,
+        description="JWT refresh token"
+    )

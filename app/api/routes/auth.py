@@ -8,15 +8,15 @@ from app.schemas.auth import (
     ChangePasswordRequest,
 )
 from app.schemas.user import (
-    UserCreate,
-    UserInLogin,
+    RegisterRequest,
+    LoginRequest,
     RefreshTokenRequest,
 )
 from app.models.user import User
 from app.services.auth_service import AuthService
-from app.schemas.response import MessageResponse
+from app.schemas.response import MessageResponse, SuccessResponse
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter()
 
 
 # -------------------------
@@ -24,19 +24,22 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 # -------------------------
 @router.post("/register")
 def register(
-    user: UserCreate,
+    user: RegisterRequest,
     background_tasks: BackgroundTasks,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    return auth_service.register(user, background_tasks)
-
+    result =  auth_service.register(user, background_tasks)
+    return SuccessResponse(
+        data=result,
+        message="User registered successfully",
+    )
 
 # -------------------------
 # LOGIN
 # -------------------------
 @router.post("/login")
 def login(
-    data: UserInLogin,
+    data: LoginRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ):
     return auth_service.login(data)

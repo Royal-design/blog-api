@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar
+from typing import Generic, Optional, TypeVar
 
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
@@ -10,6 +10,7 @@ class SuccessResponse(GenericModel, Generic[T]):
     success: bool = True
     message: str
     data: T
+    meta: dict | None = None
 
 
 class MessageResponse(BaseModel):
@@ -20,3 +21,5 @@ class MessageResponse(BaseModel):
 class ErrorResponse(BaseModel):
     success: bool = False
     message: str
+    error_code: str | None = None
+    details: str | None = None

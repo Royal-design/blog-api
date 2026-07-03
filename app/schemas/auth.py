@@ -21,3 +21,4 @@ class ChangePasswordRequest(BaseModel):
         max_length=128,
         description="New password",
     )
+    
