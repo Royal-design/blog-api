@@ -12,49 +12,69 @@ from app.core.config import (
     SECRET_KEY,
 )
 from app.core.exceptions import InvalidCredentialsError, InvalidTokenException
+from app.models.enums import TokenType
 
 password_hash = PasswordHash.recommended()
 revoked_token_ids: set[str] = set()
 
-def hash_password(password:str)->str:
+def hash_password(password: str) -> str:
     return password_hash.hash(password)
 
-def verify_password(password:str, hashed_password:str)-> bool:
+
+def verify_password(password: str, hashed_password: str) -> bool:
     return password_hash.verify(password, hashed_password)
 
-def create_token(data: dict, expires_delta: timedelta, token_type: str) -> str:
+
+def create_token(
+    data: dict,
+    expires_delta: timedelta,
+    token_type: TokenType,
+) -> str:
     payload = data.copy()
 
-    expire = datetime.now(timezone.utc) + expires_delta
-
-    payload["exp"] = expire
-    payload["type"] = token_type
-    payload["jti"] = str(uuid4())
+    payload.update(
+        {
+            "exp": datetime.now(timezone.utc) + expires_delta,
+            "type": token_type.value,
+            "jti": str(uuid4()),
+        }
+    )
 
     return jwt.encode(
         payload,
         SECRET_KEY,
         algorithm=ALGORITHM,
-    )   
+    )
 
 
 def create_access_token(data: dict) -> str:
     return create_token(
-        data,
-        timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-        "access",
+        data=data,
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        token_type=TokenType.ACCESS,
     )
 
 
 def create_refresh_token(data: dict) -> str:
     return create_token(
-        data,
-        timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
-        "refresh",
+        data=data,
+        expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+        token_type=TokenType.REFRESH,
     )
 
 
-def decode_token(token: str, expected_type: str | None = None) -> dict:
+def create_password_reset_token(data: dict) -> str:
+    return create_token(
+        data=data,
+        expires_delta=timedelta(minutes=15),
+        token_type=TokenType.PASSWORD_RESET,
+    )
+
+
+def decode_token(
+    token: str,
+    expected_type: TokenType | None = None,
+) -> dict:
     try:
         payload = jwt.decode(
             token,
@@ -63,29 +83,41 @@ def decode_token(token: str, expected_type: str | None = None) -> dict:
         )
 
         token_id = payload.get("jti")
+
         if token_id in revoked_token_ids:
             raise InvalidTokenException("Token has been revoked")
 
-        if expected_type and payload.get("type") != expected_type:
+        if (
+            expected_type is not None
+            and payload.get("type") != expected_type.value
+        ):
             raise InvalidTokenException("Invalid token type")
 
         return payload
+
     except ExpiredSignatureError:
         raise InvalidCredentialsError("Token has expired")
+
     except InvalidTokenError:
         raise InvalidTokenException("Invalid token")
 
 
 def decode_access_token(token: str) -> dict:
-    return decode_token(token, "access")
+    return decode_token(token, TokenType.ACCESS)
 
 
 def decode_refresh_token(token: str) -> dict:
-    return decode_token(token, "refresh")
+    return decode_token(token, TokenType.REFRESH)
+
+
+def decode_password_reset_token(token: str) -> dict:
+    return decode_token(token, TokenType.PASSWORD_RESET)
 
 
 def revoke_token(token: str) -> None:
     payload = decode_token(token)
+
     token_id = payload.get("jti")
+
     if token_id:
         revoked_token_ids.add(token_id)

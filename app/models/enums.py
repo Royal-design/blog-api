@@ -1,13 +1,21 @@
-import enum
-class UserRole(str, enum.Enum):
+
+from enum import StrEnum
+
+
+class UserRole(StrEnum):
     USER = "user"
     ADMIN = "admin"
     
 
-class PostStatus(str, enum.Enum):
+class PostStatus(StrEnum):
     DRAFT = "draft"
     PUBLISHED = "published"
     
-class AuthProvider(str, enum.Enum):
+class AuthProvider(StrEnum):
     CREDENTIALS = "credentials"
     GOOGLE = "google"
+
+class TokenType(StrEnum):
+    ACCESS = "access"
+    REFRESH = "refresh"
+    PASSWORD_RESET = "password_reset"
