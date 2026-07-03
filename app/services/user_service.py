@@ -4,12 +4,12 @@ from app.core.exceptions import (
 )
 from app.core.security import hash_password
 from app.models.user import User
-from app.repositories.user_repository import User_Repository
+from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserCreate, UserUpdate
 
 
 class UserService:
-    def __init__(self, repository: User_Repository):
+    def __init__(self, repository: UserRepository):
         self.repository = repository
 
     def get_all_users(self) -> list[User]:
@@ -33,6 +33,9 @@ class UserService:
     ) -> User:
         if self.get_user_by_email(user.email):
             raise EmailAlreadyExistsError("Email already exists")
+        
+        if self.get_user_by_username(user.username):
+            raise EmailAlreadyExistsError("Username already exists")
 
         db_user = User(
             **user.model_dump(exclude={"password"}),
