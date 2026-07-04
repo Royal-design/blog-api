@@ -13,6 +13,7 @@ class UserBase(BaseModel):
     email: EmailStr
     bio: str | None = None
     avatar: str | None = None
+    avatar_public_id: str | None = None
     
 class RegisterRequest(UserBase):
     password: str
@@ -27,6 +28,7 @@ class UserUpdateRequest(BaseModel):
     username: str | None = None
     bio: str | None = None
     avatar: str | None = None
+    avatar_public_id: str | None = None
     
 class UserResponse(UserBase):
     id: UUID
