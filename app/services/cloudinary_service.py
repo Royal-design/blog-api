@@ -1,5 +1,3 @@
-import resource
-
 from cloudinary import uploader
 import cloudinary
 from fastapi import UploadFile
@@ -24,11 +22,15 @@ class CloudinaryService:
         result = uploader.upload(
             image.file,
             folder=folder,
+            public_id=image.filename.rsplit(".", 1)[0],
+            use_filename=True,
+            unique_filename=True,
+            overwrite=False,
             resource_type="image",
         )
         return {
-            "avatar_url": result["secure_url"],
-            "avatar_public_id": result["public_id"],
+            "url": result["secure_url"],
+            "public_id": result["public_id"],
         }
     
     def delete_image(self, public_id:str)->None:

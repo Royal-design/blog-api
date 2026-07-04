@@ -1,6 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
+from fastapi import Form
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models.enums import AuthProvider, UserRole
@@ -46,3 +47,25 @@ class RefreshTokenRequest(BaseModel):
         min_length=10,
         description="JWT refresh token"
     )
+
+class UserProfileRequest(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    username: str | None = None
+    bio: str | None = None
+  
+    
+    @classmethod
+    def get_form(
+        cls,
+        first_name: str | None = Form(None),
+        last_name: str | None = Form(None),
+        username: str | None = Form(None),
+        bio: str | None = Form(None)
+    ):
+        return cls(
+            first_name=first_name,
+            last_name=last_name,
+            username=username,
+            bio=bio
+        )

@@ -1,15 +1,19 @@
 from uuid import UUID
 
+from fastapi import UploadFile
+
 from app.core.exceptions import AppException
 from app.core.security import hash_password
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
-from app.schemas.user import RegisterRequest, UserUpdateRequest
+from app.schemas.user import RegisterRequest, UserProfileRequest, UserUpdateRequest
+from app.services.cloudinary_service import CloudinaryService
 
 
 class UserService:
-    def __init__(self, repository: UserRepository):
+    def __init__(self, repository: UserRepository, cloudinary:CloudinaryService):
         self.repository = repository
+        self.cloudinary = cloudinary
 
     # -------------------------
     # GET ALL USERS
@@ -115,11 +119,60 @@ class UserService:
             setattr(db_user, key, value)
 
         return self.repository.update_user(db_user)
+    
+    # -------------------------
+    # UPDATE USER PROFILE
+    # -------------------------
+    
+    def update_profile(
+    self,
+    user_id: UUID,
+    request: UserProfileRequest,
+    avatar: UploadFile | None = None,
+) -> User:
+
+        user = self.get_user_by_id(user_id)
+
+        updates = request.model_dump(exclude_unset=True)
+
+        if "username" in updates:
+            existing = self.get_user_by_username(updates["username"])
+
+            if existing and existing.id != user.id:
+                raise AppException(
+                    message="Username already exists",
+                    status_code=409,
+                    error_code="USERNAME_ALREADY_EXISTS",
+                )
+
+        for key, value in updates.items():
+            setattr(user, key, value)
+
+        if avatar:
+            if user.avatar_public_id:
+                self.cloudinary.delete_image(user.avatar_public_id)
+
+            image = self.cloudinary.upload_image(
+                avatar,
+                folder="blog/avatars",
+            )
+
+            user.avatar = image["url"]
+            user.avatar_public_id = image["public_id"]
+
+        return self.repository.update_user(user)
 
     # -------------------------
     # DELETE USER
     # -------------------------
+    
     def delete_user(self, user_id: UUID) -> User:
+        if not user_id:
+            raise AppException(
+                message="User id is required",
+                status_code=400,
+                error_code="INVALID_USER_ID",
+            )
 
         user = self.get_user_by_id(user_id)
 

@@ -15,7 +15,7 @@ from app.schemas.user import (
     RegisterRequest,
     LoginRequest,
     RefreshTokenRequest,
-    UserResponse,
+    
 )
 
 from app.models.user import User
@@ -129,16 +129,3 @@ def change_password(
         user_id=current_user.id,
         request=data,
     )
-
-
-# -------------------------
-# GET CURRENT USER
-# -------------------------
-@router.get(
-    "/me",
-    response_model=UserResponse
-)
-def me(
-    current_user: User = Depends(get_current_user),
-):
-    return UserResponse.model_validate(current_user)
