@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import uuid
 from sqlalchemy import String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -18,7 +19,13 @@ class Category(Base):
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     slug: Mapped[str] = mapped_column(String, unique=True, nullable=False)
 
-    created_at: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
-    updated_at: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     posts: Mapped[list["Post"]] = relationship(back_populates="category")

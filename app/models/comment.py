@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import uuid
 from sqlalchemy import Text, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -35,8 +36,13 @@ class Comment(Base):
         ForeignKey("comments.id", ondelete="SET NULL")
     )
 
-    created_at: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
-    updated_at: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False)
+    
 
     # Relationships
     user: Mapped["User"] = relationship(back_populates="comments")

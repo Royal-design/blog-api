@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import uuid
 from sqlalchemy import String, Text, DateTime, ForeignKey, Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -43,8 +44,13 @@ class Post(Base):
 
     published_at: Mapped[DateTime | None] = mapped_column(DateTime)
 
-    created_at: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
-    updated_at: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     # Relationships
     author: Mapped["User"] = relationship(back_populates="posts")
