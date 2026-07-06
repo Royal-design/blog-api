@@ -41,6 +41,18 @@ class UserResponse(UserBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+    
+class PaginationMeta(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+class UserQueryParams(UserBase):
+    search: str | None = None
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(default=10, ge=1)
+
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str = Field(

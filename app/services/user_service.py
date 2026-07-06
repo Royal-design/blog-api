@@ -1,3 +1,4 @@
+import math
 from uuid import UUID
 
 from fastapi import UploadFile
@@ -6,7 +7,7 @@ from app.core.exceptions import AppException
 from app.core.security import hash_password
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
-from app.schemas.user import RegisterRequest, UserProfileRequest, UserUpdateRequest
+from app.schemas.user import PaginationMeta, RegisterRequest, UserProfileRequest, UserUpdateRequest
 from app.services.cloudinary_service import CloudinaryService
 
 
@@ -18,8 +19,29 @@ class UserService:
     # -------------------------
     # GET ALL USERS
     # -------------------------
-    def get_all_users(self) -> list[User]:
-        return self.repository.get_user_all()
+    def get_all_users(
+        self,
+        search: str | None = None,
+        page: int = 1,
+        page_size: int = 10,
+        ):
+        users, total = self.repository.get_user_all(
+            search=search,
+            page=page,
+            page_size=page_size,
+        )
+
+        total_pages = math.ceil(total / page_size) if page_size else 0
+        
+        return {
+            "data":users,
+            "meta": PaginationMeta(
+                total=total,
+                page=page,
+                page_size=page_size,
+                total_pages=total_pages,
+            ).model_dump()
+        }
 
     # -------------------------
     # GET USER BY ID
