@@ -27,6 +27,7 @@ class Post(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
 
     cover_image: Mapped[str | None] = mapped_column(Text)
+    cover_image_public_id: Mapped[str | None] = mapped_column(Text)
 
     status: Mapped[PostStatus] = mapped_column(SAEnum(PostStatus), nullable=False)
 
@@ -42,7 +43,12 @@ class Post(Base):
         nullable=False
     )
 
-    published_at: Mapped[DateTime | None] = mapped_column(DateTime)
+    published_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(

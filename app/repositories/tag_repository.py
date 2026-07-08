@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy.orm import Session
 
 from app.models.tag import Tag
@@ -14,6 +16,13 @@ class TagRepository:
     
     def get_tag_by_slug(self, slug: str):
         return self.db.query(Tag).filter(Tag.slug == slug).first()
+    
+    def get_tags_by_ids(self, tag_ids: list[UUID]):   
+        return (
+            self.db.query(Tag)
+            .filter(Tag.id.in_(tag_ids))
+            .all()
+        )
     
     def create_tag(self, tag: Tag):
         self.db.add(tag)

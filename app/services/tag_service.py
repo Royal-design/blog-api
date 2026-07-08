@@ -1,6 +1,7 @@
 from hmac import new
 from os import name
 from re import S
+from uuid import UUID
 
 from slugify import slugify
 from app.core.exceptions import AppException
@@ -22,6 +23,19 @@ class TagService:
     
     def get_tag_by_slug(self, slug: str):
         return self.tag_repository.get_tag_by_slug(slug)
+    
+    def get_tags_by_ids(self, tag_ids: list[UUID]):
+        if not tag_ids:
+            return []
+
+        tags = self.tag_repository.get_tags_by_ids(tag_ids)
+        if len(tags) != len(tag_ids):
+            raise AppException(
+                status_code=404,
+                detail="One or more tags were not found.",
+            )
+
+        return tags
     
     def create_tag(self, tag:TagRequest):
         slug  = slugify(tag.name)
