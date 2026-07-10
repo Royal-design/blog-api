@@ -26,7 +26,7 @@ def upgrade() -> None:
         sa.Column("post_id", sa.UUID(), nullable=False),
         sa.Column("image_url", sa.Text(), nullable=False),
         sa.Column("alt_text", sa.String(), nullable=False),
-        sa.Column("position", sa.Integer(), nullable=True),
+        sa.Column("position ", sa.Integer(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(["post_id"], ["posts.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),

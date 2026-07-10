@@ -25,7 +25,7 @@ class PostImage(Base):
 
     image_url: Mapped[str] = mapped_column(Text, nullable=False)
     alt_text: Mapped[str] = mapped_column(String, nullable=False)
-    position: Mapped[int | None] = mapped_column(Integer)
+    position: Mapped[int | None] = mapped_column("position ", Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     post: Mapped["Post"] = relationship(back_populates="images")

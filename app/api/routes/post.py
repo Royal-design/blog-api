@@ -83,7 +83,7 @@ def create_post(
     current_user: Annotated[User, Depends(get_current_user)],
     post_service: Annotated[PostService, Depends(get_post_service)],
     cover_image: UploadFile | None = File(None),
-    images: list[UploadFile] | None = File(None),
+    images: list[UploadFile] = File([]),
     image_alt_texts: list[str] = Form([]),
     image_positions: list[int] = Form([]),
 ):
@@ -112,7 +112,7 @@ def update_post(
     current_user: Annotated[User, Depends(get_current_user)],
     post_service: Annotated[PostService, Depends(get_post_service)],
     cover_image: UploadFile | None = File(None),
-    images: list[UploadFile] | None = File(None),
+    images: list[UploadFile] = File([]),
     image_alt_texts: list[str] = Form([]),
     image_positions: list[int] = Form([]),
     delete_image_ids: list[UUID] = Form([]),
