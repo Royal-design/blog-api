@@ -5,6 +5,7 @@ from fastapi import (
     APIRouter,
     Depends,
     File,
+    Form,
     UploadFile,
     status,
 )
@@ -82,11 +83,17 @@ def create_post(
     current_user: Annotated[User, Depends(get_current_user)],
     post_service: Annotated[PostService, Depends(get_post_service)],
     cover_image: UploadFile | None = File(None),
+    images: list[UploadFile] | None = File(None),
+    image_alt_texts: list[str] = Form([]),
+    image_positions: list[int] = Form([]),
 ):
     created_post = post_service.create_post(
         post=post,
         author_id=current_user.id,
         cover_image=cover_image,
+        images=images,
+        image_alt_texts=image_alt_texts,
+        image_positions=image_positions,
     )
 
     return SuccessResponse(
@@ -105,12 +112,20 @@ def update_post(
     current_user: Annotated[User, Depends(get_current_user)],
     post_service: Annotated[PostService, Depends(get_post_service)],
     cover_image: UploadFile | None = File(None),
+    images: list[UploadFile] | None = File(None),
+    image_alt_texts: list[str] = Form([]),
+    image_positions: list[int] = Form([]),
+    delete_image_ids: list[UUID] = Form([]),
 ):
     updated_post = post_service.update_post(
         post_id=post_id,
         current_user=current_user,
         post=post,
         cover_image=cover_image,
+        images=images,
+        image_alt_texts=image_alt_texts,
+        image_positions=image_positions,
+        delete_image_ids=delete_image_ids,
     )
 
     return SuccessResponse(

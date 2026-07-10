@@ -7,6 +7,7 @@ from slugify import slugify
 from app.core.exceptions import AppException
 from app.models.enums import PostStatus
 from app.models.post import Post
+from app.models.post_image import PostImage
 from app.models.user import User
 from app.repositories.post_repository import PostRepository
 from app.schemas.post import PostCreate, PostUpdate
@@ -78,11 +79,52 @@ class PostService:
                 detail="You are not authorized to perform this action.",
             )
 
+    def _build_post_images(
+        self,
+        images: list[UploadFile] | None,
+        alt_texts: list[str] | None,
+        positions: list[int] | None,
+        fallback_alt: str,
+    ) -> list[PostImage]:
+        if not images:
+            return []
+
+        post_images = []
+        for index, image in enumerate(images):
+            uploaded = self.cloudinary_service.upload_image(
+                image,
+                folder="posts",
+            )
+            
+            alt_text = (
+                alt_texts[index]
+                if alt_texts and index < len(alt_texts) and alt_texts[index]
+                else fallback_alt
+            )
+            position = (
+                positions[index]
+                if positions and index < len(positions)
+                else index
+            )
+
+            post_images.append(
+                PostImage(
+                    image_url=uploaded["url"],
+                    alt_text=alt_text,
+                    position=position,
+                )
+            )
+
+        return post_images
+
     def create_post(
         self,
         post: PostCreate,
         author_id: UUID,
         cover_image: UploadFile | None = None,
+        images: list[UploadFile] | None = None,
+        image_alt_texts: list[str] | None = None,
+        image_positions: list[int] | None = None,
     ):
         # Validate category
         self.category_service.get_category_by_id(post.category_id)
@@ -116,6 +158,13 @@ class PostService:
         if post.tag_ids:
             db_post.tags = self.tag_service.get_tags_by_ids(post.tag_ids)
 
+        db_post.images = self._build_post_images(
+            images=images,
+            alt_texts=image_alt_texts,
+            positions=image_positions,
+            fallback_alt=post.title,
+        )
+
         return self.post_repository.create_post(db_post)
 
     def update_post(
@@ -124,6 +173,10 @@ class PostService:
         current_user: User,
         post: PostUpdate,
         cover_image: UploadFile | None = None,
+        images: list[UploadFile] | None = None,
+        image_alt_texts: list[str] | None = None,
+        image_positions: list[int] | None = None,
+        delete_image_ids: list[UUID] | None = None,
     ):
         db_post = self.get_post_by_id(post_id)
 
@@ -172,6 +225,32 @@ class PostService:
 
         if post.tag_ids is not None:
             db_post.tags = self.tag_service.get_tags_by_ids(post.tag_ids)
+
+        if delete_image_ids:
+            delete_image_id_set = set(delete_image_ids)
+            existing_image_ids = {image.id for image in db_post.images}
+            invalid_image_ids = delete_image_id_set - existing_image_ids
+
+            if invalid_image_ids:
+                raise AppException(
+                    status_code=404,
+                    detail="One or more post images were not found.",
+                )
+
+            db_post.images = [
+                image
+                for image in db_post.images
+                if image.id not in delete_image_id_set
+            ]
+
+        new_images = self._build_post_images(
+            images=images,
+            alt_texts=image_alt_texts,
+            positions=image_positions,
+            fallback_alt=post.title or db_post.title,
+        )
+        if new_images:
+            db_post.images.extend(new_images)
 
         return self.post_repository.update_post(db_post)
     

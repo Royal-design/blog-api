@@ -12,6 +12,7 @@ from app.models.enums import PostStatus
 if TYPE_CHECKING:
     from app.models.category import Category
     from app.models.comment import Comment
+    from app.models.post_image import PostImage
     from app.models.tag import Tag
     from app.models.user import User
 
@@ -64,3 +65,8 @@ class Post(Base):
 
     comments: Mapped[list["Comment"]] = relationship(back_populates="post", cascade="all, delete")
     tags: Mapped[list["Tag"]] = relationship(secondary="post_tags", back_populates="posts")
+    images: Mapped[list["PostImage"]] = relationship(
+        back_populates="post",
+        cascade="all, delete-orphan",
+        order_by="PostImage.position",
+    )

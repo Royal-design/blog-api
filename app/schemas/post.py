@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import Form
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from app.models.enums import PostStatus
 
@@ -66,6 +66,46 @@ class PostUpdate(BaseModel):
         )
 
 
+class PostAuthorResponse(BaseModel):
+    id: UUID
+    first_name: str
+    last_name: str
+    username: str
+
+    @computed_field
+    @property
+    def name(self) -> str:
+        return f"{self.first_name} {self.last_name}"
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PostCategoryResponse(BaseModel):
+    id: UUID
+    name: str
+    slug: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PostTagResponse(BaseModel):
+    id: UUID
+    name: str
+    slug: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PostImageResponse(BaseModel):
+    id: UUID
+    image_url: str
+    alt_text: str
+    position: int | None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class PostResponse(BaseModel):
     id: UUID
     title: str
@@ -77,6 +117,10 @@ class PostResponse(BaseModel):
 
     author_id: UUID
     category_id: UUID
+    author: PostAuthorResponse
+    category: PostCategoryResponse
+    tags: list[PostTagResponse] = Field(default_factory=list)
+    images: list[PostImageResponse] = Field(default_factory=list)
 
     published_at: datetime | None
     created_at: datetime
