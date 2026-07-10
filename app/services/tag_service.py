@@ -19,10 +19,22 @@ class TagService:
         return self.tag_repository.get_all_tags()
     
     def get_tag_by_id(self, tag_id: str):
-        return self.tag_repository.get_tag_by_id(tag_id)
+        tag = self.tag_repository.get_tag_by_id(tag_id)
+        if not tag:
+            raise AppException(
+                status_code=404,
+                detail="Tag not found.",
+            )
+        return tag
     
     def get_tag_by_slug(self, slug: str):
-        return self.tag_repository.get_tag_by_slug(slug)
+        tag = self.tag_repository.get_tag_by_slug(slug)
+        if not tag:
+            raise AppException(
+                status_code=404,
+                detail="Tag not found.",
+            )
+        return tag
     
     def get_tags_by_ids(self, tag_ids: list[UUID]):
         if not tag_ids:

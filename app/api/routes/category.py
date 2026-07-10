@@ -37,6 +37,12 @@ def get_category(category_id: UUID, category_service: CategoryService = Depends(
 
     return category
 
+@router.get("/slug/{slug}", response_model=CategoryResponse)
+def get_category(slug_name: str, category_service: CategoryService = Depends(get_category_service)):
+    category = category_service.get_category_by_slug(slug_name)
+    return category
+
+
 @router.put("/{category_id}", response_model=SuccessResponse[CategoryResponse])
 def update_category(
     category_id: UUID,

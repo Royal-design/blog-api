@@ -5,6 +5,9 @@ from app.models.post import Post
 class PostRepository:
     def __init__(self, db: Session):
         self.db = db
+        
+    def get_all_posts(self):
+        return self.db.query(Post).all()
     
     def get_post_by_id(self, post_id: str):
         return self.db.query(Post).filter(Post.id == post_id).first()

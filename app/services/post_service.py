@@ -7,6 +7,7 @@ from slugify import slugify
 from app.core.exceptions import AppException
 from app.models.enums import PostStatus
 from app.models.post import Post
+from app.models.user import User
 from app.repositories.post_repository import PostRepository
 from app.schemas.post import PostCreate, PostUpdate
 from app.services.category_service import CategoryService
@@ -62,6 +63,20 @@ class PostService:
             counter += 1
 
         return slug
+    
+    def _check_post_permission(
+        self,
+        post: Post,
+        current_user: User,
+    ):
+        if (
+            post.author_id != current_user.id
+            # and current_user.role != UserRole.ADMIN
+        ):
+            raise AppException(
+                status_code=403,
+                detail="You are not authorized to perform this action.",
+            )
 
     def create_post(
         self,
@@ -106,23 +121,24 @@ class PostService:
     def update_post(
         self,
         post_id: UUID,
+        current_user: User,
         post: PostUpdate,
         cover_image: UploadFile | None = None,
     ):
         db_post = self.get_post_by_id(post_id)
+
+        self._check_post_permission(db_post, current_user)
 
         update_data = post.model_dump(
             exclude_unset=True,
             exclude={"tag_ids"},
         )
 
-        # Validate category
         if "category_id" in update_data:
             self.category_service.get_category_by_id(
                 update_data["category_id"]
             )
 
-        # Generate a new slug if title changes
         if (
             "title" in update_data
             and update_data["title"] != db_post.title
@@ -131,14 +147,12 @@ class PostService:
                 update_data["title"]
             )
 
-        # Set published_at when publishing for the first time
         if (
             update_data.get("status") == PostStatus.PUBLISHED
             and db_post.published_at is None
         ):
             update_data["published_at"] = datetime.now(timezone.utc)
 
-        # Upload new cover image
         if cover_image:
             if db_post.cover_image_public_id:
                 self.cloudinary_service.delete_image(
@@ -153,18 +167,22 @@ class PostService:
             update_data["cover_image"] = uploaded["url"]
             update_data["cover_image_public_id"] = uploaded["public_id"]
 
-        # Update all normal fields
         for key, value in update_data.items():
             setattr(db_post, key, value)
 
-        # Update tags
         if post.tag_ids is not None:
             db_post.tags = self.tag_service.get_tags_by_ids(post.tag_ids)
 
         return self.post_repository.update_post(db_post)
     
-    def delete_post(self, post_id: UUID):
+    def delete_post(
+        self,
+        post_id: UUID,
+        current_user: User,
+    ):
         post = self.get_post_by_id(post_id)
+
+        self._check_post_permission(post, current_user)
 
         if post.cover_image_public_id:
             self.cloudinary_service.delete_image(

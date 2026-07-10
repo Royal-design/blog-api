@@ -33,6 +33,12 @@ def get_tag(tag_id: UUID, tag_service: TagService = Depends(get_tag_service)):
     tag = tag_service.get_tag_by_id(tag_id)
     return tag
 
+
+@router.get("/slug/{slug}", response_model=TagResponse)
+def get_tag(slug_name: str, tag_service: TagService = Depends(get_tag_service)):
+    tag = tag_service.get_tag_by_slug(slug_name)
+    return tag
+
 @router.put("/{tag_id}", response_model=SuccessResponse[TagResponse])
 def update_tag(
     tag_id: UUID,

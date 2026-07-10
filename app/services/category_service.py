@@ -23,6 +23,16 @@ class CategoryService:
             )
 
         return category
+    
+    def get_category_by_slug(self, slug: str):
+        category = self.category_repository.get_category_by_slug(slug)
+        if not category:
+            raise AppException(
+                status_code=404,
+                detail="Category not found.",
+            )
+        return category 
+        
 
     def create_category(self, request: CategoryCreate):
         slug = slugify(request.name)
