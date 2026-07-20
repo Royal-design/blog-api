@@ -146,3 +146,7 @@ def revoke_token(token: str) -> None:
 
     if token_id:
         revoked_token_ids.add(token_id)
+
+
+def get_token_jti(token: str) -> str | None:
+    return decode_token(token).get("jti")

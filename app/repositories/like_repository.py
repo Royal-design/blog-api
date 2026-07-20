@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.like import Like
+from app.models.post import Post
 
 
 class LikeRepository:
@@ -21,10 +22,10 @@ class LikeRepository:
             self.db.query(Like)
             .options(
                 selectinload(Like.post),
-                selectinload(Like.post).selectinload("author"),
-                selectinload(Like.post).selectinload("category"),
-                selectinload(Like.post).selectinload("tags"),
-                selectinload(Like.post).selectinload("images"),
+                selectinload(Like.post).selectinload(Post.author),
+                selectinload(Like.post).selectinload(Post.category),
+                selectinload(Like.post).selectinload(Post.tags),
+                selectinload(Like.post).selectinload(Post.images),
             )
             .filter(Like.user_id == user_id)
             .all()

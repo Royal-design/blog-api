@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import BackgroundTasks
 from uuid import UUID
 
@@ -9,6 +11,7 @@ from app.core.security import (
     create_refresh_token,
     decode_password_reset_token,
     decode_refresh_token,
+    get_token_jti,
     hash_password,
     revoke_token,
     verify_password,
@@ -25,6 +28,7 @@ from app.schemas.user import (
     LoginRequest,
 )
 from app.services.email_service import EmailService
+from app.services.refresh_token_service import RefreshTokenService
 from app.services.user_service import UserService
 
 
@@ -33,9 +37,11 @@ class AuthService:
         self,
         user_service: UserService,
         email_service: EmailService,
+        refresh_token_service: RefreshTokenService,
     ):
         self.user_service = user_service
         self.email_service = email_service
+        self.refresh_token_service = refresh_token_service
 
     # -------------------------
     # REGISTER
@@ -107,6 +113,16 @@ class AuthService:
             refresh_data.refresh_token
         )
 
+        token_jti = payload.get("jti")
+        if not token_jti:
+            raise AppException(
+                message="Invalid refresh token",
+                status_code=401,
+                error_code="INVALID_REFRESH_TOKEN",
+            )
+
+        self.refresh_token_service.validate_refresh_token(token_jti)
+
         try:
             user_id = UUID(payload["sub"])
         except (KeyError, TypeError, ValueError):
@@ -118,6 +134,7 @@ class AuthService:
 
         user = self.user_service.get_user_by_id(user_id)
 
+        self.refresh_token_service.revoke_refresh_token(token_jti)
         revoke_token(refresh_data.refresh_token)
 
         tokens = self._create_auth_tokens(user)
@@ -139,6 +156,9 @@ class AuthService:
         revoke_token(access_token)
 
         if refresh_token:
+            token_jti = get_token_jti(refresh_token)
+            if token_jti:
+                self.refresh_token_service.revoke_refresh_token(token_jti)
             revoke_token(refresh_token)
 
         return MessageResponse(
@@ -256,7 +276,20 @@ class AuthService:
             "email": user.email,
         }
 
+        refresh_token = create_refresh_token(payload)
+        refresh_payload = decode_refresh_token(refresh_token)
+        expires_at = datetime.fromtimestamp(
+            refresh_payload["exp"],
+            tz=timezone.utc,
+        )
+
+        self.refresh_token_service.store_refresh_token(
+            token_jti=refresh_payload["jti"],
+            user_id=user.id,
+            expires_at=expires_at,
+        )
+
         return {
             "access_token": create_access_token(payload),
-            "refresh_token": create_refresh_token(payload),
+            "refresh_token": refresh_token,
         }

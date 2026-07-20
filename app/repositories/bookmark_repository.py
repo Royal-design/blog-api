@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.bookmark import Bookmark
+from app.models.post import Post
 
 
 class BookmarkRepository:
@@ -21,10 +22,10 @@ class BookmarkRepository:
             self.db.query(Bookmark)
             .options(
                 selectinload(Bookmark.post),
-                selectinload(Bookmark.post).selectinload("author"),
-                selectinload(Bookmark.post).selectinload("category"),
-                selectinload(Bookmark.post).selectinload("tags"),
-                selectinload(Bookmark.post).selectinload("images"),
+                selectinload(Bookmark.post).selectinload(Post.author),
+                selectinload(Bookmark.post).selectinload(Post.category),
+                selectinload(Bookmark.post).selectinload(Post.tags),
+                selectinload(Bookmark.post).selectinload(Post.images),
             )
             .filter(Bookmark.user_id == user_id)
             .all()
