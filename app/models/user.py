@@ -10,8 +10,12 @@ from app.models.enums import AuthProvider, UserRole
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from app.models.post import Post
+    from app.models.bookmark import Bookmark
     from app.models.comment import Comment
+    from app.models.follow import Follow
+    from app.models.like import Like
+    from app.models.post import Post
+    from app.models.refresh_token import RefreshToken
 
 class User(Base):
     __tablename__ = "users"
@@ -47,3 +51,16 @@ class User(Base):
     # Relationships
     posts: Mapped[list["Post"]] = relationship(back_populates="author", cascade="all, delete")
     comments: Mapped[list["Comment"]] = relationship(back_populates="user", cascade="all, delete")
+    likes: Mapped[list["Like"]] = relationship(back_populates="user", cascade="all, delete")
+    bookmarks: Mapped[list["Bookmark"]] = relationship(back_populates="user", cascade="all, delete")
+    following: Mapped[list["Follow"]] = relationship(
+        foreign_keys="Follow.follower_id",
+        back_populates="follower",
+        cascade="all, delete",
+    )
+    followers: Mapped[list["Follow"]] = relationship(
+        foreign_keys="Follow.following_id",
+        back_populates="following",
+        cascade="all, delete",
+    )
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user", cascade="all, delete")

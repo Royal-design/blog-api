@@ -5,3 +5,7 @@ from app.models.category import Category
 from app.models.tag import Tag
 from app.models.post_tag import PostTag
 from app.models.post_image import PostImage
+from app.models.like import Like
+from app.models.bookmark import Bookmark
+from app.models.follow import Follow
+from app.models.refresh_token import RefreshToken

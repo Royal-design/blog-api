@@ -33,7 +33,8 @@ class Comment(Base):
 
     parent_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("comments.id", ondelete="SET NULL")
+        ForeignKey("comments.id", ondelete="SET NULL"),
+        nullable=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
@@ -48,4 +49,10 @@ class Comment(Base):
     user: Mapped["User"] = relationship(back_populates="comments")
     post: Mapped["Post"] = relationship(back_populates="comments")
 
-    replies: Mapped[list["Comment"]] = relationship(remote_side=[id])
+    parent: Mapped["Comment | None"] = relationship(
+        remote_side=[id],
+        back_populates="replies",
+    )
+    replies: Mapped[list["Comment"]] = relationship(
+        back_populates="parent",
+    )

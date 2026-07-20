@@ -10,8 +10,10 @@ from typing import TYPE_CHECKING
 from app.models.enums import PostStatus
 
 if TYPE_CHECKING:
+    from app.models.bookmark import Bookmark
     from app.models.category import Category
     from app.models.comment import Comment
+    from app.models.like import Like
     from app.models.post_image import PostImage
     from app.models.tag import Tag
     from app.models.user import User
@@ -64,6 +66,8 @@ class Post(Base):
     category: Mapped["Category"] = relationship(back_populates="posts")
 
     comments: Mapped[list["Comment"]] = relationship(back_populates="post", cascade="all, delete")
+    likes: Mapped[list["Like"]] = relationship(back_populates="post", cascade="all, delete")
+    bookmarks: Mapped[list["Bookmark"]] = relationship(back_populates="post", cascade="all, delete")
     tags: Mapped[list["Tag"]] = relationship(secondary="post_tags", back_populates="posts")
     images: Mapped[list["PostImage"]] = relationship(
         back_populates="post",
