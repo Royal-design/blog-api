@@ -19,6 +19,7 @@ class CommentUserResponse(BaseModel):
     first_name: str
     last_name: str
     username: str
+    avatar: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

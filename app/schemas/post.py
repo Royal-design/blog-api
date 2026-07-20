@@ -71,6 +71,7 @@ class PostAuthorResponse(BaseModel):
     first_name: str
     last_name: str
     username: str
+    avatar: str | None = None
 
     @computed_field
     @property
